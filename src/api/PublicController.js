@@ -3,6 +3,7 @@ import moment from 'moment'
 
 class EmailController {
   constructor() {}
+  // 忘记密码发送邮箱
   async forget(ctx) {
     const { body } = ctx.request
     console.log(body)

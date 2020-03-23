@@ -8,10 +8,16 @@ import jsonutil from 'koa-json'
 import cors from '@koa/cors'
 import compose from 'koa-compose'
 import compress from 'koa-compress'
+import JWT from 'koa-jwt'
+import { jwt_secret } from './config/index'
+import ErrorHandle from './common/ErrorHandle'
 
 const app = new koa()
 
 const isDevMode = process.env.NODE_ENV === 'production' ? false : true
+
+// 不使用鉴权
+const jwt = JWT({ secret: jwt_secret }).unless({ path: [/^\/public/, /^\/login/] })
 
 /**
  * 使用koa-compose 集成中间件
@@ -25,6 +31,8 @@ const middleware = compose([
   }),
   jsonutil({ pretty: false, param: 'pretty' }),
   helmet(),
+  ErrorHandle,
+  jwt
 ])
 
 if (!isDevMode) {

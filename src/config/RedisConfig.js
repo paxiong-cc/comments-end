@@ -40,6 +40,7 @@ const setValue = (key, value, time) => {
       ? client.set(key, value, 'EX', time)
       : client.set(key, value)
   } else if (typeof value === 'object') {
+    // 设置hash
     Object.keys(value).forEach(item => {
       client.hset(key, item, value[item], redis.print)
     })
@@ -52,7 +53,7 @@ const getValue = key => {
   return client.getAsync(key)
 }
 
-// 设置hash
+// 获取hash
 const getHvalue = key => {
   return client.hgetallAsync(key)
 }
