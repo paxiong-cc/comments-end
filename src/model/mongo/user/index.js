@@ -1,41 +1,13 @@
-import User from './model'
+import mongoose from '@/config/MongooseConfig'
 
-const user = {
-  email: '576303283@qq.com',
-  username: 'paxiong',
-  password: '123456'
-}
+const Schema = mongoose.Schema
 
-// 增
-const newMethod = async () => {
-  const data = new User(user)
-  const result = await data.save()
-  console.log(result)
-}
+const UserSchema = new Schema({
+  email: { type: String },
+  username: { type: String },
+  password: { type: String }
+})
 
-// 删
-const deleteMethod = async () => {
-  const result = await User.deleteOne({name: 'paxiong'})
-  console.log(result)
-}
+const UserModel = mongoose.model('users', UserSchema)
 
-// 改
-const updateMethod = async () => {
-  // 将paxiong的email改为cc
-  const result = await User.update({name: 'paxiong'}, {email: 'cc'})
-  console.log(result)
-}
-
-// 查
-const findMethod = async () => {
-  const result = await User.find()
-  console.log(result)
-}
-
-export {
-  newMethod,
-  deleteMethod,
-  updateMethod,
-  findMethod
-}
-
+export default UserModel

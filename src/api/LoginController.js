@@ -3,7 +3,8 @@ import { setValue } from '@/config/RedisConfig'
 import jsonwebtoken from 'jsonwebtoken'
 import { jwt_secret } from '@/config/index'
 import { checkCode } from '@/common/Utils'
-import User from '@/model/mongo/user/model'
+import User from '@/model/mongo/user'
+import bcrypt from 'bcrypt'
 
 
 class VcodeController {
@@ -44,19 +45,52 @@ class VcodeController {
 
     // 验证账号和密码
     const user = await User.findOne({email: userinfo.email})
-    if (user === null || user.password !== userinfo.password) {
+    if (user === null || user.password !== await bcrypt.hash(userinfo.password, 5)) {
       return ctx.body = {
         code: 404,
-        msg: '用户或密码错误'
+        msg: '用户名或密码错误'
       }
     } else {
       // 生成token
       const token = jsonwebtoken.sign({username: userinfo.username}, jwt_secret, {expiresIn: '1h'})
-  
       ctx.body = {
         code: 200,
         token
       }
+    }
+  }
+
+  /* 注册 */
+  async register(ctx) {
+    const userinfo = ctx.request.body
+
+    // 判断验证码
+    if (await checkCode(userinfo.sid, userinfo.code)) {
+      return ctx.body = {
+        code: 404,
+        msg: '图片验证码错误'
+      }
+    }
+
+    // 判断邮箱
+    if (await User.findOne({email: userinfo.email}) !== null) {
+      return ctx.body = {
+        code: 404,
+        msg: '邮箱已注册, 你可以选择找回邮箱'
+      }
+    }
+
+    // 密码加密储存
+    const info = {
+      email: userinfo.email,
+      username: userinfo.username,
+      password: await bcrypt.hash(userinfo.password, 5)
+    }
+    const user = new User(info)
+    await user.save()
+    ctx.body = {
+      code: 200,
+      msg: '注册成功!'
     }
   }
 }
