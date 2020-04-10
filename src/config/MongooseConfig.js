@@ -3,11 +3,12 @@ import { mongoDBConfig } from './index'
 
 const { address, port, user, pass, database } = mongoDBConfig
 
+mongoose.set('useCreateIndex', true)
 // 创建连接
 mongoose.connect(`mongodb://${user}:${pass}@${address}:${port}/${database}?authSource=admin`, {
   useUnifiedTopology: true,
   useNewUrlParser: true
-});
+})
 
 // 连接成功
 mongoose.connection.on('connected', () => {

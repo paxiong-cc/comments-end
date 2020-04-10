@@ -3,12 +3,11 @@ import { setValue } from '@/config/RedisConfig'
 import jsonwebtoken from 'jsonwebtoken'
 import { jwt_secret } from '@/config/index'
 import { checkCode } from '@/common/Utils'
-import User from '@/model/mongo/user'
+import User from '@/model/mongoose/User'
 import bcrypt from 'bcrypt'
 
 
 class VcodeController {
-  constructor() {}
   /* 获取验证码 */ 
   async getCaptcha(ctx) {
     // 获取客户端对应的唯一值
@@ -20,7 +19,7 @@ class VcodeController {
       color: true,
       noise: Math.floor(Math.random() * 5),
       width: 150,
-      height: 40,
+      height: 38,
     })
 
     // 添加到redis中
@@ -43,9 +42,9 @@ class VcodeController {
       }
     }
 
-    // 验证账号和密码
+    // 验证邮箱和密码
     const user = await User.findOne({email: userinfo.email})
-    if (user === null || user.password !== await bcrypt.hash(userinfo.password, 5)) {
+    if (user === null || await bcrypt.compare(user.password, userinfo.password)) {
       return ctx.body = {
         code: 404,
         msg: '用户名或密码错误'
@@ -63,7 +62,6 @@ class VcodeController {
   /* 注册 */
   async register(ctx) {
     const userinfo = ctx.request.body
-
     // 判断验证码
     if (await checkCode(userinfo.sid, userinfo.code)) {
       return ctx.body = {
@@ -75,10 +73,11 @@ class VcodeController {
     // 判断邮箱
     if (await User.findOne({email: userinfo.email}) !== null) {
       return ctx.body = {
-        code: 404,
-        msg: '邮箱已注册, 你可以选择找回邮箱'
+        code: 401,
+        msg: '邮箱已注册!'
       }
     }
+
 
     // 密码加密储存
     const info = {

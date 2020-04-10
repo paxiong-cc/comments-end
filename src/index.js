@@ -1,4 +1,4 @@
-import koa from 'koa'
+import Koa from 'koa'
 import path from 'path'
 import helmet from 'koa-helmet'
 import statics from 'koa-static'
@@ -12,9 +12,9 @@ import JWT from 'koa-jwt'
 import { jwt_secret } from './config/index'
 import ErrorHandle from './common/ErrorHandle'
 
-const app = new koa()
+const app = new Koa()
 
-const isDevMode = process.env.NODE_ENV === 'production' ? false : true
+const isDevMode = process.env.NODE_ENV !== 'production'
 
 // 不使用鉴权
 const jwt = JWT({ secret: jwt_secret }).unless({ path: [/^\/public/, /^\/login/] })
@@ -26,8 +26,8 @@ const middleware = compose([
   koaBody(),
   statics(path.join(__dirname, '../public')),
   cors({
-    origin: 'http://localhost:8080',    // 前端地址
-    credentials: true   
+    origin: 'http://localhost:8080', // 前端地址
+    credentials: true
   }),
   jsonutil({ pretty: false, param: 'pretty' }),
   helmet(),
