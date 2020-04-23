@@ -4,7 +4,9 @@ import jsonwebtoken from 'jsonwebtoken'
 import { jwt_secret } from '@/config/index'
 import { checkCode } from '@/common/Utils'
 import User from '@/model/mongoose/User'
+import SignRecord from '@/model/mongoose/SignRecord'
 import bcrypt from 'bcrypt'
+import moment from 'moment'
 
 
 class VcodeController {
@@ -44,16 +46,56 @@ class VcodeController {
 
     // 验证邮箱和密码
     const user = await User.findOne({email: userinfo.email})
-    if (user === null || await bcrypt.compare(user.password, userinfo.password)) {
+    if (user === null || !await bcrypt.compare(userinfo.password, user.password)) {
       return ctx.body = {
         code: 404,
         msg: '用户名或密码错误'
       }
     } else {
       // 生成token
-      const token = jsonwebtoken.sign({username: userinfo.username}, jwt_secret, {expiresIn: '1h'})
+      const token = jsonwebtoken.sign({_id: user._id}, jwt_secret, {expiresIn: '1h'})
+      // 获取用户信息
+      const userObj = user.toJSON() // mongoose提供的user对象中的json数据，不然会夹杂其它数据
+      const arr = ['password', 'roles']
+      arr.forEach(item => {
+        Reflect.deleteProperty(userObj, item)
+      })
+      // 获取签到记录
+      const record = await SignRecord.findByUid(userObj._id)
+      let isSign,
+          getDate = moment().format('YYYY-MM-DD')
+      if (record === null) {
+        isSign = false
+        userObj.count = 0
+        await User.updateOne({
+          _id: userObj._id
+        }, {
+          $set: { count: 0 }
+        })
+      } else {
+        moment(record.created).format('YYYY-MM-DD') === moment().format('YYYY-MM-DD')
+          ? (isSign = true)
+          : (isSign = false)
+        
+        // 连续签到中断，修改连续签到天数
+        const recordD = moment(record.created).format('YYYY-MM-DD')
+        if (moment(recordD).isBefore(moment(getDate).subtract(1, 'days'))) {
+          userObj.count = 0
+          await User.updateOne({
+            _id: userObj._id
+          }, {
+            $set: { count: 0 }
+          })
+        }
+      }
+      
       ctx.body = {
         code: 200,
+        data: {
+          ...userObj,
+          isSign,
+          getDate
+        },
         token
       }
     }
@@ -77,7 +119,6 @@ class VcodeController {
         msg: '邮箱已注册!'
       }
     }
-
 
     // 密码加密储存
     const info = {

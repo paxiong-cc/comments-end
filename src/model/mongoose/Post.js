@@ -5,7 +5,7 @@ import moment from 'moment'
 const Schema = mongoose.Schema
 
 const PostSchema = new Schema({
-  uid: { type: String, ref: 'users' }, // 用户ID
+  uid: { type: String, ref: 'users' }, // 用户ID(指向users表)
   title: { type: String }, // 文章标题
   content: { type: String }, // 文章内容
   created: { type: Date }, // now()	创建时间时间
@@ -44,6 +44,22 @@ PostSchema.statics = {
       .sort({ [sort]: -1 })
       .skip(pageIndex * pageSize)
       .limit(pageSize)
+      .populate({ // 在uid同层添加users里的username isVip pic
+        path: 'uid',
+        select: 'username isVip pic'
+      })
+  },
+  getTopWeek: function() {
+    return this.find({
+      created: {
+        $gte: moment().subtract(7, 'days')
+      }
+    }, {
+      answer: 1, // 只要answer和title
+      title: 1
+    })
+      .sort({ answer: -1 })
+      .limit(15)
   }
 }
 

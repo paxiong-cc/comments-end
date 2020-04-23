@@ -10,10 +10,10 @@ const UserSchema = new Schema({
   password: { type: String },
   created: { type: Date },
   updated: { type: Date },
-  favs: { type: String },
+  favs: { type: Number, default: 100 },
   gender: { type: String, default: '' },
   roles: { type: Array, default: ['user'] },
-  pic: { type: String },
+  pic: { type: String, default: '/img/paxiong.jpg' },
   mobile: { type: String, match: /^1[3-9](\d{9})$/, default: '' },
   status: { type: String, default: '0' },
   regmark: { type: String, default: '' },
@@ -33,7 +33,7 @@ UserSchema.pre('update', function(next) {
 })
 
 UserSchema.post('save', function(error, doc, next) {
-  if (error.name === 'MongoError' && error.code === 11000) {
+  if (error.email === 'MongoError' && error.code === 11000) {
     next(new Error('Error: Mongoose has a duplicate key.'))
   } else {
     next(error)
@@ -45,7 +45,8 @@ UserSchema.statics = {
     return this.findOne({ _id: id }, {
       password: 0,
       username: 0,
-      mobile: 0
+      mobile: 0,
+      email: 0
     })
   }
 }

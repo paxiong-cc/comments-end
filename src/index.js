@@ -24,7 +24,7 @@ const jwt = JWT({ secret: jwt_secret }).unless({ path: [/^\/public/, /^\/login/]
  */
 const middleware = compose([
   koaBody(),
-  statics(path.join(__dirname, '../public')),
+  statics(path.join(__dirname, '../public')), // http://localhost:3000/img/paxiong.jpg
   cors({
     origin: 'http://localhost:8080', // 前端地址
     credentials: true
